@@ -32,7 +32,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5WE9YNHVVY2U3MzE3TlE0RzhKMDBicDU5V1JHTUZoTmZ2RVNuQTIvTDhHc0FBQkFBQUFBQUFBQUFBQUlBQUFBQXVOVkdRdEpCNVdPSzhUYzY2ZWdGUmFpT2t4ajI0RzMyRHFmby9DelNyajZaaXBaM0pCWHR0b3RWaExHNGJ1dU5oWXJzUUFYcVAyWXdvaVMzVlNYeFNUQ0pKMXR0SG9KemNRdDFoY0c3YzRxNnNabVRnZERFei90QnpGYTBlb3pwaUEwRmkvYWhWTXM9Cg==",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDg4RDNDMDU0Njc4QkMyOUMKUldTY3dvdG5WTURUaUpaaUE3T1RUQW5OeXdsTVJMa0xUYndSd0JCMmNWV0w5R0UyWlN0ZVFMNEUK",
       "endpoints": [
         "https://github.com/gesucreative-hub/gesu-bridge/releases/latest/download/latest.json"
       ]
