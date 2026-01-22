@@ -179,14 +179,16 @@ export type CameraResolution = '640x480' | '1280x720' | '1920x1080';
 /**
  * Start a camera mirror session
  * @param noAudio - Disable audio forwarding (mute)
+ * @param orientation - Camera orientation: 'portrait' or 'landscape'
  */
 export async function startCamera(
   serial: string, 
   facing: CameraFacing = 'back', 
   resolution: CameraResolution = '1280x720',
-  noAudio: boolean = true
+  noAudio: boolean = true,
+  orientation: 'portrait' | 'landscape' = 'portrait'
 ): Promise<MirrorSession> {
-  return invoke<MirrorSession>("start_camera", { serial, facing, resolution, noAudio });
+  return invoke<MirrorSession>("start_camera", { serial, facing, resolution, noAudio, orientation });
 }
 
 /**

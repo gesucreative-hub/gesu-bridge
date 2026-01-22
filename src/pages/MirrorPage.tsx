@@ -34,6 +34,7 @@ export function MirrorPage() {
   const [cameraFacing, setCameraFacing] = useState<CameraFacing>('back');
   const [cameraResolution, setCameraResolution] = useState<CameraResolution>('1280x720');
   const [muteAudio, setMuteAudio] = useState(true);
+  const [cameraOrientation, setCameraOrientation] = useState<'portrait' | 'landscape'>('portrait');
 
   useEffect(() => {
     loadInitial();
@@ -84,7 +85,7 @@ export function MirrorPage() {
       if (mode === 'screen') {
         await startMirror(serial, screenOff);
       } else {
-        await startCamera(serial, cameraFacing, cameraResolution, muteAudio);
+        await startCamera(serial, cameraFacing, cameraResolution, muteAudio, cameraOrientation);
       }
       await refreshSessions();
     } catch (err) {
@@ -258,6 +259,41 @@ export function MirrorPage() {
                 <option value="1280x720">720p (1280×720)</option>
                 <option value="1920x1080">1080p (1920×1080)</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-surface-400 mb-2">Orientation</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCameraOrientation('portrait')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
+                    cameraOrientation === 'portrait' 
+                      ? 'bg-primary-600 text-white' 
+                      : 'bg-surface-800 text-surface-400 hover:bg-surface-700'
+                  }`}
+                >
+                  {/* Portrait phone icon */}
+                  <svg className="w-5 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <rect x="6" y="3" width="12" height="18" rx="2" strokeWidth={2} />
+                    <circle cx="12" cy="18" r="1" fill="currentColor" />
+                  </svg>
+                  Portrait
+                </button>
+                <button
+                  onClick={() => setCameraOrientation('landscape')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
+                    cameraOrientation === 'landscape' 
+                      ? 'bg-primary-600 text-white' 
+                      : 'bg-surface-800 text-surface-400 hover:bg-surface-700'
+                  }`}
+                >
+                  {/* Landscape phone icon */}
+                  <svg className="w-6 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <rect x="3" y="6" width="18" height="12" rx="2" strokeWidth={2} />
+                    <circle cx="18" cy="12" r="1" fill="currentColor" />
+                  </svg>
+                  Landscape
+                </button>
+              </div>
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-surface-800">
               <div>

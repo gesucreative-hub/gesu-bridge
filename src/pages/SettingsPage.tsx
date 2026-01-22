@@ -223,9 +223,9 @@ export function SettingsPage() {
           </div>
 
           {settings?.adb_resolved_path && (
-            <div className="text-xs text-surface-500 bg-surface-800/50 rounded-lg p-3">
+            <div className="text-xs text-surface-500 bg-surface-800/50 rounded-lg p-3 overflow-hidden">
               <span className="text-surface-400">Resolved path:</span>{" "}
-              <code className="text-primary-400">{settings.adb_resolved_path}</code>
+              <code className="text-primary-400 break-all">{settings.adb_resolved_path}</code>
             </div>
           )}
 
@@ -297,9 +297,9 @@ export function SettingsPage() {
           </div>
 
           {settings?.scrcpy_resolved_path && (
-            <div className="text-xs text-surface-500 bg-surface-800/50 rounded-lg p-3">
+            <div className="text-xs text-surface-500 bg-surface-800/50 rounded-lg p-3 overflow-hidden">
               <span className="text-surface-400">Resolved path:</span>{" "}
-              <code className="text-primary-400">{settings.scrcpy_resolved_path}</code>
+              <code className="text-primary-400 break-all">{settings.scrcpy_resolved_path}</code>
             </div>
           )}
 
@@ -322,7 +322,7 @@ export function SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-surface-300 text-sm">Current version</p>
-              <p className="text-surface-100 font-medium">v0.4.0</p>
+              <p className="text-surface-100 font-medium">v0.5.0</p>
             </div>
             <button
               onClick={checkForUpdates}

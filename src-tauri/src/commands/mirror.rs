@@ -44,9 +44,10 @@ pub fn get_mirror_sessions() -> Vec<MirrorSession> {
 pub fn start_camera(
     app: AppHandle,
     serial: String,
-    facing: String,     // "front" or "back"
-    resolution: String, // e.g., "1920x1080"
-    no_audio: bool,     // disable audio forwarding
+    facing: String,      // "front" or "back"
+    resolution: String,  // e.g., "1920x1080"
+    no_audio: bool,      // disable audio forwarding
+    orientation: String, // "portrait" or "landscape"
 ) -> Result<MirrorSession, AppError> {
     let settings = settings_service::get_settings_with_detection(&app)?;
 
@@ -56,7 +57,14 @@ pub fn start_camera(
         )
     })?;
 
-    scrcpy_service::start_camera_mirror(&scrcpy_path, &serial, &facing, &resolution, no_audio)
+    scrcpy_service::start_camera_mirror(
+        &scrcpy_path,
+        &serial,
+        &facing,
+        &resolution,
+        no_audio,
+        &orientation,
+    )
 }
 
 /// Stop a camera mirror session for a device

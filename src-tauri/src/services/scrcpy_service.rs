@@ -137,6 +137,7 @@ pub fn start_camera_mirror(
     camera_facing: &str, // "front" or "back"
     camera_size: &str,   // e.g., "1920x1080"
     no_audio: bool,      // disable audio forwarding
+    orientation: &str,   // "portrait" or "landscape"
 ) -> Result<MirrorSession, AppError> {
     ensure_camera_sessions_map();
 
@@ -161,6 +162,18 @@ pub fn start_camera_mirror(
 
     if no_audio {
         cmd.arg("--no-audio");
+    }
+
+    // Camera sensors naturally output landscape, orientation depends on:
+    // - Portrait + Back camera: 90° rotation
+    // - Portrait + Front camera: 270° rotation (front sensor is flipped)
+    // - Landscape: no rotation (natural camera orientation)
+    if orientation == "portrait" {
+        if camera_facing == "front" {
+            cmd.arg("--orientation=270");
+        } else {
+            cmd.arg("--orientation=90");
+        }
     }
 
     #[cfg(target_os = "windows")]
