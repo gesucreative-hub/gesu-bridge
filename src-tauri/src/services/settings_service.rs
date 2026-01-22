@@ -6,6 +6,12 @@ use std::fs;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 const SETTINGS_FILE: &str = "settings.json";
 
 /// Get the settings file path
@@ -92,7 +98,13 @@ pub fn validate_adb_path(path: &str) -> bool {
     }
 
     // Try to run adb version to verify it works
-    let output = std::process::Command::new(&path).arg("version").output();
+    let mut cmd = std::process::Command::new(&path);
+    cmd.arg("version");
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let output = cmd.output();
 
     matches!(output, Ok(o) if o.status.success())
 }
@@ -134,7 +146,13 @@ pub fn validate_scrcpy_path(path: &str) -> bool {
     }
 
     // Try to run scrcpy --version to verify it works
-    let output = std::process::Command::new(&path).arg("--version").output();
+    let mut cmd = std::process::Command::new(&path);
+    cmd.arg("--version");
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let output = cmd.output();
 
     matches!(output, Ok(o) if o.status.success())
 }

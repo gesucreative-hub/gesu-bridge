@@ -8,6 +8,12 @@ use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 /// Global state for active transfers and history
 static TRANSFERS: Mutex<Option<TransferState>> = Mutex::new(None);
 
@@ -94,11 +100,15 @@ pub fn push_file(
     }
 
     // Run adb push synchronously (for simplicity in MVP)
-    let output = Command::new(adb_path)
-        .args(["-s", serial, "push", source_path, &dest_path])
+    let mut cmd = Command::new(adb_path);
+    cmd.args(["-s", serial, "push", source_path, &dest_path])
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output();
+        .stderr(Stdio::piped());
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let output = cmd.output();
 
     let mut state = TRANSFERS.lock().unwrap();
     let state = state.as_mut().unwrap();
