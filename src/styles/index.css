@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+/* ========================================
+   GesuBridge Design Tokens
+   Centralized theme variables
+   ======================================== */
+
+@theme {
+  /* Primary Colors - Green accent */
+  --color-primary-50: #f0fde4;
+  --color-primary-100: #dcfcb8;
+  --color-primary-200: #c4f989;
+  --color-primary-300: #aef75d;
+  --color-primary-400: #a1f94a;
+  --color-primary-500: #84e028;
+  --color-primary-600: #6bc51d;
+  --color-primary-700: #54a015;
+  --color-primary-800: #3d7a0f;
+  --color-primary-900: #2a5409;
+
+  /* Neutral / Surface Colors */
+  --color-surface-50: #fafafa;
+  --color-surface-100: #f4f4f5;
+  --color-surface-200: #e4e4e7;
+  --color-surface-300: #d4d4d8;
+  --color-surface-400: #a1a1aa;
+  --color-surface-500: #71717a;
+  --color-surface-600: #52525b;
+  --color-surface-700: #3f3f46;
+  --color-surface-800: #27272a;
+  --color-surface-900: #18181b;
+  --color-surface-950: #09090b;
+
+  /* Semantic Colors */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Device State Colors */
+  --color-device-ready: #22c55e;
+  --color-device-unauthorized: #f59e0b;
+  --color-device-offline: #ef4444;
+  --color-device-unknown: #71717a;
+
+  /* Spacing */
+  --spacing-sidebar: 16rem;
+
+  /* Animation */
+  --animate-fade-in: fade-in 0.2s ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* ========================================
+   Base Styles
+   ======================================== */
+
+html {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface-950);
+  color: var(--color-surface-100);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+}
+
+/* ========================================
+   Scrollbar Styling
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-900);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-600);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-surface-500);
+}
