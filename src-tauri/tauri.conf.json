@@ -27,6 +27,15 @@
     "icon": [
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": [
+        "https://github.com/gesucreative-hub/gesu-bridge/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

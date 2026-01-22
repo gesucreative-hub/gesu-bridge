@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { getSettings, setAdbPath, detectAdb, setScrcpyPath, detectScrcpy, parseError, type Settings } from "../api/bridge";
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 
 export function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -12,6 +14,12 @@ export function SettingsPage() {
   const [isDetectingScrcpy, setIsDetectingScrcpy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<"adb" | "scrcpy" | null>(null);
+  
+  // Update state
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState<{ version: string } | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   useEffect(() => {
     loadSettings();
@@ -99,6 +107,37 @@ export function SettingsPage() {
       setError(parseError(err));
     } finally {
       setIsSavingScrcpy(false);
+    }
+  }
+
+  async function checkForUpdates() {
+    setIsCheckingUpdate(true);
+    setUpdateError(null);
+    setUpdateAvailable(null);
+    try {
+      const update = await check();
+      if (update) {
+        setUpdateAvailable({ version: update.version });
+      }
+    } catch (err) {
+      setUpdateError(parseError(err));
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  }
+
+  async function installUpdate() {
+    setIsUpdating(true);
+    setUpdateError(null);
+    try {
+      const update = await check();
+      if (update) {
+        await update.downloadAndInstall();
+        await relaunch();
+      }
+    } catch (err) {
+      setUpdateError(parseError(err));
+      setIsUpdating(false);
     }
   }
 
@@ -271,6 +310,65 @@ export function SettingsPage() {
               </svg>
               scrcpy settings saved!
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Updates Section */}
+      <div className="bg-surface-900 border border-surface-800 rounded-xl p-6 mt-6">
+        <h2 className="text-lg font-semibold text-surface-100 mb-4">Updates</h2>
+        
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-surface-300 text-sm">Current version</p>
+              <p className="text-surface-100 font-medium">v0.1.0</p>
+            </div>
+            <button
+              onClick={checkForUpdates}
+              disabled={isCheckingUpdate || isUpdating}
+              className="px-4 py-2 bg-surface-700 hover:bg-surface-600 
+                       text-surface-200 rounded-lg text-sm font-medium 
+                       transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {isCheckingUpdate ? "Checking..." : "Check for Updates"}
+            </button>
+          </div>
+
+          {updateError && (
+            <div className="bg-error/10 border border-error/30 rounded-lg p-3">
+              <p className="text-error text-sm">{updateError}</p>
+            </div>
+          )}
+
+          {updateAvailable && (
+            <div className="bg-primary-600/10 border border-primary-500/30 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-primary-400 font-medium">
+                    Update available: v{updateAvailable.version}
+                  </p>
+                  <p className="text-surface-500 text-sm">
+                    A new version is ready to install
+                  </p>
+                </div>
+                <button
+                  onClick={installUpdate}
+                  disabled={isUpdating}
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-500 
+                           text-white rounded-lg text-sm font-medium 
+                           transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {isUpdating ? "Installing..." : "Install & Restart"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!updateAvailable && !updateError && !isCheckingUpdate && (
+            <p className="text-surface-500 text-sm">
+              Click "Check for Updates" to see if a new version is available.
+            </p>
           )}
         </div>
       </div>
