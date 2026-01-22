@@ -33,6 +33,24 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Download ADB Platform Tools
+        shell: bash
+        run: |
+          mkdir -p src-tauri/resources/adb
+          curl -L -o platform-tools.zip https://dl.google.com/android/repository/platform-tools-latest-windows.zip
+          unzip -o platform-tools.zip -d temp-adb
+          cp temp-adb/platform-tools/* src-tauri/resources/adb/
+          rm -rf platform-tools.zip temp-adb
+
+      - name: Download scrcpy
+        shell: bash
+        run: |
+          mkdir -p src-tauri/resources/scrcpy
+          curl -L -o scrcpy.zip https://github.com/Genymobile/scrcpy/releases/download/v3.1/scrcpy-win64-v3.1.zip
+          unzip -o scrcpy.zip -d temp-scrcpy
+          cp temp-scrcpy/scrcpy-win64-v3.1/* src-tauri/resources/scrcpy/
+          rm -rf scrcpy.zip temp-scrcpy
+
       - name: Install frontend dependencies
         run: pnpm install
 
