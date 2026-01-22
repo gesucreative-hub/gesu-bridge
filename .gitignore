@@ -29,3 +29,7 @@ src-tauri/Cargo.lock
 
 # Build bundles (optional - remove if you want to track releases)
 src-tauri/target/release/bundle/
+
+# Bundled binaries (downloaded separately, not tracked in git)
+src-tauri/resources/adb/
+src-tauri/resources/scrcpy/

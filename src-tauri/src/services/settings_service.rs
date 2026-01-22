@@ -56,9 +56,17 @@ pub fn save_settings(app: &AppHandle, settings: &Settings) -> Result<(), AppErro
     Ok(())
 }
 
-/// Auto-detect ADB path
-pub fn detect_adb_path() -> Option<String> {
-    // First check PATH using which
+/// Auto-detect ADB path, checking bundled resources first
+pub fn detect_adb_path(app: &AppHandle) -> Option<String> {
+    // First check bundled resources
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        let bundled_adb = resource_dir.join("resources/adb/adb.exe");
+        if bundled_adb.exists() {
+            return Some(bundled_adb.to_string_lossy().to_string());
+        }
+    }
+
+    // Then check PATH using which
     if let Ok(path) = which::which("adb") {
         return Some(path.to_string_lossy().to_string());
     }
@@ -109,9 +117,17 @@ pub fn validate_adb_path(path: &str) -> bool {
     matches!(output, Ok(o) if o.status.success())
 }
 
-/// Auto-detect scrcpy path
-pub fn detect_scrcpy_path() -> Option<String> {
-    // First check PATH using which
+/// Auto-detect scrcpy path, checking bundled resources first
+pub fn detect_scrcpy_path(app: &AppHandle) -> Option<String> {
+    // First check bundled resources
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        let bundled_scrcpy = resource_dir.join("resources/scrcpy/scrcpy.exe");
+        if bundled_scrcpy.exists() {
+            return Some(bundled_scrcpy.to_string_lossy().to_string());
+        }
+    }
+
+    // Then check PATH using which
     if let Ok(path) = which::which("scrcpy") {
         return Some(path.to_string_lossy().to_string());
     }
@@ -170,8 +186,8 @@ pub fn get_settings_with_detection(app: &AppHandle) -> Result<Settings, AppError
             None
         }
     } else {
-        // Try auto-detection
-        detect_adb_path()
+        // Try auto-detection (checks bundled first)
+        detect_adb_path(app)
     };
 
     settings.adb_resolved_path = adb_resolved.clone();
@@ -186,8 +202,8 @@ pub fn get_settings_with_detection(app: &AppHandle) -> Result<Settings, AppError
             None
         }
     } else {
-        // Try auto-detection
-        detect_scrcpy_path()
+        // Try auto-detection (checks bundled first)
+        detect_scrcpy_path(app)
     };
 
     settings.scrcpy_resolved_path = scrcpy_resolved.clone();

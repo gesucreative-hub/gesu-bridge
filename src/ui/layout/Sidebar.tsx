@@ -194,7 +194,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
           </span>
         </div>
         <p className="text-xs text-surface-500 text-center">
-          GesuBridge v0.3.0
+          GesuBridge v0.4.0
         </p>
       </div>
     </aside>

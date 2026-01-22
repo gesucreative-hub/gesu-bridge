@@ -24,8 +24,8 @@ pub fn set_adb_path(app: AppHandle, path: Option<String>) -> Result<Settings, Ap
 
 /// Trigger auto-detection of ADB path
 #[tauri::command]
-pub fn detect_adb() -> Option<String> {
-    settings_service::detect_adb_path()
+pub fn detect_adb(app: AppHandle) -> Option<String> {
+    settings_service::detect_adb_path(&app)
 }
 
 /// Set a custom scrcpy path
@@ -41,6 +41,6 @@ pub fn set_scrcpy_path(app: AppHandle, path: Option<String>) -> Result<Settings,
 
 /// Trigger auto-detection of scrcpy path
 #[tauri::command]
-pub fn detect_scrcpy() -> Option<String> {
-    settings_service::detect_scrcpy_path()
+pub fn detect_scrcpy(app: AppHandle) -> Option<String> {
+    settings_service::detect_scrcpy_path(&app)
 }
