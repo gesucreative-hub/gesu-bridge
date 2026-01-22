@@ -1,5 +1,6 @@
 import { type ReactNode, useState, useEffect } from "react";
 import { ping } from "../../api/bridge";
+import appIcon from "../../assets/app-icon.svg";
 
 export type PageId = "devices" | "mirror" | "transfer" | "bluetooth" | "settings";
 
@@ -139,7 +140,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
             <img 
-              src="/src/assets/app-icon.svg" 
+              src={appIcon} 
               alt="GesuBridge Logo" 
               className="w-full h-full object-contain"
             />

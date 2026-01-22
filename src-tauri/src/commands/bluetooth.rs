@@ -1,26 +1,30 @@
-//! Bluetooth-related Tauri commands
-
+use crate::domain::errors::AppError;
 use std::process::Command;
 
-/// Open Windows Bluetooth settings
+/// Opens the Windows Bluetooth settings panel.
 #[tauri::command]
-pub fn open_bluetooth_settings() {
-    // Opens Windows Settings > Bluetooth & devices
-    let _ = Command::new("cmd")
-        .args(["/c", "start", "ms-settings:bluetooth"])
-        .spawn();
+pub async fn open_bluetooth_settings() -> Result<(), AppError> {
+    Command::new("explorer.exe")
+        .arg("ms-settings:bluetooth")
+        .spawn()
+        .map_err(|e| AppError::IoError(format!("Failed to open Bluetooth settings: {}", e)))?;
+    Ok(())
 }
 
-/// Open Bluetooth file send dialog (fsquirt.exe)
+/// Opens the Windows Bluetooth file send dialog (fsquirt).
 #[tauri::command]
-pub fn open_bluetooth_send() {
-    // fsquirt.exe is the Windows Bluetooth File Transfer Wizard
-    let _ = Command::new("fsquirt.exe").spawn();
+pub async fn open_bluetooth_send() -> Result<(), AppError> {
+    Command::new("fsquirt.exe")
+        .spawn()
+        .map_err(|e| AppError::IoError(format!("Failed to open Bluetooth send dialog: {}", e)))?;
+    Ok(())
 }
 
-/// Open Bluetooth file receive dialog
+/// Opens the Windows Bluetooth file receive dialog (fsquirt -r).
 #[tauri::command]
-pub fn open_bluetooth_receive() {
-    // -Receive flag opens receive mode
-    let _ = Command::new("fsquirt.exe").arg("-Receive").spawn();
+pub async fn open_bluetooth_receive() -> Result<(), AppError> {
+    Command::new("fsquirt.exe").arg("-r").spawn().map_err(|e| {
+        AppError::IoError(format!("Failed to open Bluetooth receive dialog: {}", e))
+    })?;
+    Ok(())
 }

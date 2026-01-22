@@ -6,6 +6,12 @@ use std::collections::HashMap;
 use std::process::{Child, Command};
 use std::sync::Mutex;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 /// Global state for active screen mirror sessions
 static ACTIVE_SESSIONS: Mutex<Option<HashMap<String, Child>>> = Mutex::new(None);
 
@@ -50,6 +56,9 @@ pub fn start_mirror(
     if screen_off {
         cmd.arg("--turn-screen-off");
     }
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
 
     let child = cmd
         .spawn()
@@ -153,6 +162,9 @@ pub fn start_camera_mirror(
     if no_audio {
         cmd.arg("--no-audio");
     }
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
 
     let child = cmd
         .spawn()
