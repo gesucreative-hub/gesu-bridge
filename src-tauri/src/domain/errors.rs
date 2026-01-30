@@ -25,6 +25,8 @@ pub enum AppError {
     MirrorError(String),
     /// Transfer operation failed
     TransferError(String),
+    /// Thumbnail generation/retrieval failed
+    ThumbnailNotAvailable(String),
 }
 
 impl fmt::Display for AppError {
@@ -39,6 +41,7 @@ impl fmt::Display for AppError {
             AppError::ScrcpyNotFound(msg) => write!(f, "scrcpy not found: {}", msg),
             AppError::MirrorError(msg) => write!(f, "Mirror error: {}", msg),
             AppError::TransferError(msg) => write!(f, "Transfer error: {}", msg),
+            AppError::ThumbnailNotAvailable(msg) => write!(f, "Thumbnail not available: {}", msg),
         }
     }
 }
@@ -76,6 +79,9 @@ impl AppError {
             }
             AppError::TransferError(_) => {
                 "File transfer failed. Check device connection and storage permissions."
+            }
+            AppError::ThumbnailNotAvailable(_) => {
+                "Thumbnail preview not available for this media file."
             }
         }
     }

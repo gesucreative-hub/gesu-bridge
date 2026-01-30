@@ -173,6 +173,61 @@ pub fn validate_scrcpy_path(path: &str) -> bool {
     matches!(output, Ok(o) if o.status.success())
 }
 
+/// Auto-detect FFmpeg path, checking bundled resources first
+pub fn detect_ffmpeg_path(app: &AppHandle) -> Option<String> {
+    // First check bundled resources
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        let bundled_ffmpeg = resource_dir.join("resources/ffmpeg/ffmpeg.exe");
+        if bundled_ffmpeg.exists() {
+            return Some(bundled_ffmpeg.to_string_lossy().to_string());
+        }
+    }
+
+    // Then check PATH using which
+    if let Ok(path) = which::which("ffmpeg") {
+        return Some(path.to_string_lossy().to_string());
+    }
+
+    // Check common locations on Windows
+    let common_paths = [
+        // User's custom location
+        Some(PathBuf::from("C:/ffmpeg/bin/ffmpeg.exe")),
+        // WinGet location (generic guess, though IDs vary)
+        dirs::home_dir()
+            .map(|h| h.join("AppData/Local/Microsoft/WinGet/Packages/ffmpeg/bin/ffmpeg.exe")),
+    ];
+
+    // Check common paths
+    for path_opt in common_paths.iter() {
+        if let Some(path) = path_opt {
+            if path.exists() {
+                return Some(path.to_string_lossy().to_string());
+            }
+        }
+    }
+
+    None
+}
+
+/// Validate that a ffmpeg path is valid and executable
+pub fn validate_ffmpeg_path(path: &str) -> bool {
+    let path = PathBuf::from(path);
+    if !path.exists() {
+        return false;
+    }
+
+    // Try to run ffmpeg -version to verify it works
+    let mut cmd = std::process::Command::new(&path);
+    cmd.arg("-version");
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let output = cmd.output();
+
+    matches!(output, Ok(o) if o.status.success())
+}
+
 /// Get settings with resolved ADB and scrcpy paths
 pub fn get_settings_with_detection(app: &AppHandle) -> Result<Settings, AppError> {
     let mut settings = load_settings(app)?;
@@ -208,6 +263,22 @@ pub fn get_settings_with_detection(app: &AppHandle) -> Result<Settings, AppError
 
     settings.scrcpy_resolved_path = scrcpy_resolved.clone();
     settings.scrcpy_available = scrcpy_resolved.is_some();
+
+    // Resolve FFmpeg path
+    let ffmpeg_resolved = if let Some(ref user_path) = settings.ffmpeg_path {
+        // User specified a path, validate it
+        if validate_ffmpeg_path(user_path) {
+            Some(user_path.clone())
+        } else {
+            None
+        }
+    } else {
+        // Try auto-detection (checks bundled first)
+        detect_ffmpeg_path(app)
+    };
+
+    settings.ffmpeg_resolved_path = ffmpeg_resolved.clone();
+    settings.ffmpeg_available = ffmpeg_resolved.is_some();
 
     Ok(settings)
 }

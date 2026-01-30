@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Sidebar, type PageId } from "./ui/layout/Sidebar";
-import { DevicesPage, MirrorPage, TransferPage, BluetoothPage, SettingsPage } from "./pages";
+import { DevicesPage, MirrorPage, TransferPage, MediaPreviewerPage, BluetoothPage, SettingsPage } from "./pages";
 import "./styles/index.css";
 
 function App() {
@@ -14,6 +14,8 @@ function App() {
         return <MirrorPage />;
       case "transfer":
         return <TransferPage />;
+      case "media":
+        return <MediaPreviewerPage />;
       case "bluetooth":
         return <BluetoothPage />;
       case "settings":

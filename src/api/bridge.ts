@@ -27,6 +27,9 @@ export interface Settings {
   scrcpy_resolved_path: string | null;
   scrcpy_available: boolean;
   default_device_dir: string;
+  ffmpeg_path: string | null;
+  ffmpeg_resolved_path: string | null;
+  ffmpeg_available: boolean;
 }
 
 export interface MirrorSession {
@@ -134,6 +137,21 @@ export async function setScrcpyPath(path: string | null): Promise<Settings> {
  */
 export async function detectScrcpy(): Promise<string | null> {
   return invoke<string | null>("detect_scrcpy");
+}
+
+/**
+ * Set a custom FFmpeg path (or null to use auto-detect)
+ */
+export async function setFfmpegPath(path: string | null): Promise<Settings> {
+  return invoke<Settings>("set_ffmpeg_path", { path });
+}
+
+/**
+ * Trigger auto-detection of FFmpeg path
+ * @returns Detected path or null if not found
+ */
+export async function detectFfmpeg(): Promise<string | null> {
+  return invoke<string | null>("detect_ffmpeg");
 }
 
 /**
@@ -258,6 +276,114 @@ export async function openBluetoothSend(): Promise<void> {
  */
 export async function openBluetoothReceive(): Promise<void> {
   return invoke<void>("open_bluetooth_receive");
+}
+
+// ============================================
+// Media Previewer Types
+// ============================================
+
+export interface FolderInfo {
+  name: string;
+  path: string;
+  item_count: number | null;
+  is_media_folder: boolean;
+}
+
+export type MediaType = 'image' | 'video';
+
+export interface MediaItem {
+  path: string;
+  name: string;
+  media_type: MediaType;
+  size_bytes: number;
+  width: number | null;
+  height: number | null;
+  duration_ms: number | null;
+  date_taken: string | null;
+  thumbnail_url: string | null;
+}
+
+export type MediaFilter = 'all' | 'images' | 'videos';
+
+export interface MediaTransferResult {
+  source_path: string;
+  dest_path: string | null;
+  success: boolean;
+  error: string | null;
+  size_bytes: number;
+}
+
+// ============================================
+// Media Previewer Commands
+// ============================================
+
+/**
+ * List folders on the device at specified path
+ * @param serial Device serial number
+ * @param path Path to list (defaults to /sdcard if not specified)
+ */
+export async function listDeviceFolders(
+  serial: string,
+  path?: string
+): Promise<FolderInfo[]> {
+  return invoke<FolderInfo[]>("list_device_folders", { serial, path });
+}
+
+/**
+ * List media files in a folder on the device
+ * @param serial Device serial number
+ * @param path Path to list media from
+ * @param filter Optional filter: 'all', 'images', or 'videos'
+ */
+export async function listDeviceMedia(
+  serial: string,
+  path: string,
+  filter?: MediaFilter
+): Promise<MediaItem[]> {
+  return invoke<MediaItem[]>("list_device_media", { serial, path, filter });
+}
+
+/**
+ * Get thumbnail for a media file
+ * @returns Base64 data URL or throws if thumbnail not available
+ */
+export async function getMediaThumbnail(
+  serial: string,
+  path: string
+): Promise<string> {
+  return invoke<string>("get_media_thumbnail", { serial, path });
+}
+
+/**
+ * Pull media files from device to PC
+ * @param serial Device serial number
+ * @param paths Array of remote file paths to pull
+ * @param dest Optional destination folder (defaults to Downloads)
+ */
+export async function pullMediaFiles(
+  serial: string,
+  paths: string[],
+  dest?: string
+): Promise<MediaTransferResult[]> {
+  return invoke<MediaTransferResult[]>("pull_media_files", { serial, paths, dest });
+}
+
+/**
+ * Preview a media file by pulling to temp and returning local path
+ * @returns Local file path for preview
+ */
+export async function previewMedia(
+  serial: string,
+  path: string
+): Promise<string> {
+  return invoke<string>("preview_media", { serial, path });
+}
+
+/**
+ * Open folder in system file manager
+ */
+export async function openMediaFolder(path: string): Promise<void> {
+  return invoke<void>("open_media_folder", { path });
 }
 
 // ============================================

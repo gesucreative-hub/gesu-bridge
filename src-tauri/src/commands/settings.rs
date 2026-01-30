@@ -44,3 +44,20 @@ pub fn set_scrcpy_path(app: AppHandle, path: Option<String>) -> Result<Settings,
 pub fn detect_scrcpy(app: AppHandle) -> Option<String> {
     settings_service::detect_scrcpy_path(&app)
 }
+
+/// Set a custom FFmpeg path
+#[tauri::command]
+pub fn set_ffmpeg_path(app: AppHandle, path: Option<String>) -> Result<Settings, AppError> {
+    let mut settings = settings_service::load_settings(&app)?;
+    settings.ffmpeg_path = path;
+    settings_service::save_settings(&app, &settings)?;
+
+    // Return updated settings with detection
+    settings_service::get_settings_with_detection(&app)
+}
+
+/// Trigger auto-detection of FFmpeg path
+#[tauri::command]
+pub fn detect_ffmpeg(app: AppHandle) -> Option<String> {
+    settings_service::detect_ffmpeg_path(&app)
+}

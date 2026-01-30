@@ -8,6 +8,15 @@
     "opener:default",
     "dialog:default",
     "updater:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    "fs:default",
+    {
+      "identifier": "fs:allow-read",
+      "allow": [
+          { "path": "$APPCACHE/**" },
+          { "path": "$APPDATA/**" },
+          { "path": "$TEMP/**" }
+      ]
+    }
   ]
 }

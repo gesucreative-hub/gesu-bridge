@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getSettings, setAdbPath, detectAdb, setScrcpyPath, detectScrcpy, parseError, type Settings } from "../api/bridge";
+import { getSettings, setAdbPath, detectAdb, setScrcpyPath, detectScrcpy, setFfmpegPath, detectFfmpeg, parseError, type Settings } from "../api/bridge";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 
@@ -12,8 +12,13 @@ export function SettingsPage() {
   const [isSavingScrcpy, setIsSavingScrcpy] = useState(false);
   const [isDetectingAdb, setIsDetectingAdb] = useState(false);
   const [isDetectingScrcpy, setIsDetectingScrcpy] = useState(false);
+  
+  const [ffmpegInput, setFfmpegInput] = useState("");
+  const [isSavingFfmpeg, setIsSavingFfmpeg] = useState(false);
+  const [isDetectingFfmpeg, setIsDetectingFfmpeg] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState<"adb" | "scrcpy" | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<"adb" | "scrcpy" | "ffmpeg" | null>(null);
   
   // Update state
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
@@ -33,6 +38,7 @@ export function SettingsPage() {
       setSettings(result);
       setAdbInput(result.adb_path ?? result.adb_resolved_path ?? "");
       setScrcpyInput(result.scrcpy_path ?? result.scrcpy_resolved_path ?? "");
+      setFfmpegInput(result.ffmpeg_path ?? result.ffmpeg_resolved_path ?? "");
     } catch (err) {
       setError(parseError(err));
     } finally {
@@ -76,6 +82,24 @@ export function SettingsPage() {
     }
   }
 
+  async function handleDetectFfmpeg() {
+    setIsDetectingFfmpeg(true);
+    setError(null);
+    try {
+      const detected = await detectFfmpeg();
+      if (detected) {
+        setFfmpegInput(detected);
+        await handleSaveFfmpeg(detected);
+      } else {
+        setError("FFmpeg not found. Please install FFmpeg or set path manually.");
+      }
+    } catch (err) {
+      setError(parseError(err));
+    } finally {
+      setIsDetectingFfmpeg(false);
+    }
+  }
+
   async function handleSaveAdb(pathOverride?: string) {
     const path = pathOverride ?? adbInput;
     setIsSavingAdb(true);
@@ -107,6 +131,23 @@ export function SettingsPage() {
       setError(parseError(err));
     } finally {
       setIsSavingScrcpy(false);
+    }
+  }
+
+  async function handleSaveFfmpeg(pathOverride?: string) {
+    const path = pathOverride ?? ffmpegInput;
+    setIsSavingFfmpeg(true);
+    setError(null);
+    setSaveSuccess(null);
+    try {
+      const result = await setFfmpegPath(path || null);
+      setSettings(result);
+      setSaveSuccess("ffmpeg");
+      setTimeout(() => setSaveSuccess(null), 2000);
+    } catch (err) {
+      setError(parseError(err));
+    } finally {
+      setIsSavingFfmpeg(false);
     }
   }
 
@@ -314,6 +355,80 @@ export function SettingsPage() {
         </div>
       </div>
 
+      {/* FFmpeg Configuration */}
+      <div className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-surface-200">FFmpeg Configuration</h2>
+          <div className={`flex items-center gap-2 text-sm ${settings?.ffmpeg_available ? "text-success" : "text-error"}`}>
+            <div className={`w-2 h-2 rounded-full ${settings?.ffmpeg_available ? "bg-success" : "bg-error"}`} />
+            {settings?.ffmpeg_available ? "Available" : "Not Found"}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-surface-400 mb-2">FFmpeg Path</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={ffmpegInput}
+                onChange={(e) => setFfmpegInput(e.target.value)}
+                placeholder="Auto-detect or enter path..."
+                className="flex-1 px-4 py-2 bg-surface-800 border border-surface-700 rounded-lg 
+                         text-surface-200 placeholder-surface-500 
+                         focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              />
+              <button
+                onClick={() => handleSaveFfmpeg()}
+                disabled={isSavingFfmpeg}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:bg-surface-700 
+                         text-white rounded-lg text-sm font-medium transition-colors cursor-pointer
+                         disabled:cursor-not-allowed"
+              >
+                {isSavingFfmpeg ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleDetectFfmpeg}
+              disabled={isDetectingFfmpeg}
+              className="px-4 py-2 bg-surface-700 hover:bg-surface-600 disabled:bg-surface-800
+                       text-surface-200 rounded-lg text-sm font-medium transition-colors cursor-pointer
+                       disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isDetectingFfmpeg ? "Detecting..." : "Auto-Detect"}
+            </button>
+            {ffmpegInput && (
+              <button
+                onClick={() => { setFfmpegInput(""); handleSaveFfmpeg(""); }}
+                className="px-4 py-2 bg-surface-700 hover:bg-surface-600 
+                         text-surface-400 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {settings?.ffmpeg_resolved_path && (
+            <div className="text-xs text-surface-500 bg-surface-800/50 rounded-lg p-3 overflow-hidden">
+              <span className="text-surface-400">Resolved path:</span>{" "}
+              <code className="text-primary-400 break-all">{settings.ffmpeg_resolved_path}</code>
+            </div>
+          )}
+
+          {saveSuccess === "ffmpeg" && (
+            <div className="flex items-center gap-2 text-success text-sm">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              FFmpeg settings saved!
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Updates Section */}
       <div className="bg-surface-900 border border-surface-800 rounded-xl p-6 mt-6">
         <h2 className="text-lg font-semibold text-surface-100 mb-4">Updates</h2>
@@ -322,7 +437,7 @@ export function SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-surface-300 text-sm">Current version</p>
-              <p className="text-surface-100 font-medium">v0.5.0</p>
+              <p className="text-surface-100 font-medium">v0.6.0</p>
             </div>
             <button
               onClick={checkForUpdates}

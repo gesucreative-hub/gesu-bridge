@@ -73,6 +73,15 @@ pub struct Settings {
     pub scrcpy_available: bool,
     /// Default target directory on device for transfers
     pub default_device_dir: String,
+    /// User-configured FFmpeg path
+    #[serde(default)]
+    pub ffmpeg_path: Option<String>,
+    /// Resolved FFmpeg path (after auto-detection)
+    #[serde(default)]
+    pub ffmpeg_resolved_path: Option<String>,
+    /// Whether FFmpeg was successfully detected/validated
+    #[serde(default)]
+    pub ffmpeg_available: bool,
 }
 
 impl Settings {
@@ -85,6 +94,9 @@ impl Settings {
             scrcpy_resolved_path: None,
             scrcpy_available: false,
             default_device_dir: "Download/GesuBridge".to_string(),
+            ffmpeg_path: None,
+            ffmpeg_resolved_path: None,
+            ffmpeg_available: false,
         }
     }
 }
@@ -112,4 +124,59 @@ pub struct TransferItem {
     pub status: TransferStatus,
     pub error: Option<String>,
     pub started_at: String,
+}
+
+// ============================================
+// Media Previewer Models
+// ============================================
+
+/// Folder information from device
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FolderInfo {
+    pub name: String,
+    pub path: String,
+    pub item_count: Option<u32>,
+    pub is_media_folder: bool,
+}
+
+/// Media file types
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum MediaType {
+    Image,
+    Video,
+}
+
+/// Media item from device
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MediaItem {
+    pub path: String,
+    pub name: String,
+    pub media_type: MediaType,
+    pub size_bytes: u64,
+    pub width: Option<u32>,
+    pub height: Option<u32>,
+    pub duration_ms: Option<u64>,
+    pub date_taken: Option<String>,
+    pub thumbnail_url: Option<String>,
+}
+
+/// Media filter for listing
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum MediaFilter {
+    #[default]
+    All,
+    Images,
+    Videos,
+}
+
+/// Transfer result for media operations
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MediaTransferResult {
+    pub source_path: String,
+    pub dest_path: Option<String>,
+    pub success: bool,
+    pub error: Option<String>,
+    pub size_bytes: u64,
 }
