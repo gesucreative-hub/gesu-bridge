@@ -33,3 +33,4 @@ src-tauri/target/release/bundle/
 # Bundled binaries (downloaded separately, not tracked in git)
 src-tauri/resources/adb/
 src-tauri/resources/scrcpy/
+src-tauri/resources/ffmpeg/
