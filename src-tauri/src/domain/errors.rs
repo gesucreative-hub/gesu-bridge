@@ -27,6 +27,8 @@ pub enum AppError {
     TransferError(String),
     /// Thumbnail generation/retrieval failed
     ThumbnailNotAvailable(String),
+    /// FFmpeg executable not found
+    FfmpegNotFound(String),
 }
 
 impl fmt::Display for AppError {
@@ -42,6 +44,7 @@ impl fmt::Display for AppError {
             AppError::MirrorError(msg) => write!(f, "Mirror error: {}", msg),
             AppError::TransferError(msg) => write!(f, "Transfer error: {}", msg),
             AppError::ThumbnailNotAvailable(msg) => write!(f, "Thumbnail not available: {}", msg),
+            AppError::FfmpegNotFound(msg) => write!(f, "FFmpeg not found: {}", msg),
         }
     }
 }
@@ -82,6 +85,9 @@ impl AppError {
             }
             AppError::ThumbnailNotAvailable(_) => {
                 "Thumbnail preview not available for this media file."
+            }
+            AppError::FfmpegNotFound(_) => {
+                "Install FFmpeg or set the FFmpeg path manually in Settings to enable transcoding."
             }
         }
     }
