@@ -4,7 +4,7 @@ use crate::domain::errors::AppError;
 use crate::domain::models::{FolderInfo, MediaFilter, MediaItem, MediaTransferResult, MediaType};
 use crate::services::adb_service::run_adb_command;
 use std::os::windows::process::CommandExt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// Common media folder paths on Android devices
 const MEDIA_FOLDERS: &[&str] = &[
@@ -28,6 +28,48 @@ fn quote_remote_path(path: &str) -> String {
     // Single quote the path and escape any single quotes inside
     // '/sdcard/It's Me' -> '/sdcard/It'\''s Me'
     format!("'{}'", path.replace('\'', "'\\''"))
+}
+
+/// Detect the best default root folder for media browsing
+/// Priority: SD card > Internal storage (/storage/emulated/0) > /sdcard
+pub fn get_default_media_root(adb_path: &str, serial: &str) -> Result<String, AppError> {
+    // Try to list /storage/ directory
+    let output = run_adb_command(adb_path, &["-s", serial, "shell", "ls", "/storage/"]);
+
+    if let Ok(storage_list) = output {
+        // Look for SD card (non-emulated storage)
+        for line in storage_list.lines() {
+            let line = line.trim();
+
+            // Skip emulated, self, and empty lines
+            if line.is_empty() || line.contains("emulated") || line == "self" {
+                continue;
+            }
+
+            // Found potential SD card (usually formatted as XXXX-XXXX)
+            let sd_path = format!("/storage/{}", line);
+
+            // Verify it's accessible and has media folders
+            let verify = run_adb_command(adb_path, &["-s", serial, "shell", "ls", &sd_path]);
+
+            if verify.is_ok() {
+                // SD card is accessible, use it
+                return Ok(sd_path);
+            }
+        }
+    }
+
+    // No SD card found, try internal storage
+    let internal_storage = "/storage/emulated/0";
+    let verify_internal =
+        run_adb_command(adb_path, &["-s", serial, "shell", "ls", internal_storage]);
+
+    if verify_internal.is_ok() {
+        return Ok(internal_storage.to_string());
+    }
+
+    // Final fallback to /sdcard (symlink to internal storage on most devices)
+    Ok("/sdcard".to_string())
 }
 
 /// List folders at a given path on the device

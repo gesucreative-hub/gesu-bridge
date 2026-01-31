@@ -11,6 +11,7 @@ import {
   pullMediaFiles,
   openMediaFolder,
   getSettings,
+  getDefaultMediaRoot,
   parseError,
   type Device,
   type FolderInfo,
@@ -52,9 +53,19 @@ export function MediaPreviewerPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Resizable panel state
-  const [panelWidth, setPanelWidth] = useState(320); // Default wider
+  const [panelWidth, setPanelWidth] = useState(260); // Optimized default
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Cache refs
+  const folderCache = useRef<Record<string, FolderInfo[]>>({});
+  const mediaCache = useRef<Record<string, Record<string, MediaItem[]>>>({}); // path -> filter -> items
+
+  // Clear cache when device changes
+  useEffect(() => {
+    folderCache.current = {};
+    mediaCache.current = {};
+  }, [selectedDevice?.serial]);
 
   // Handle resize drag
   useEffect(() => {
@@ -96,6 +107,13 @@ export function MediaPreviewerPage() {
           const readyDevice = deviceList.find((d) => d.state === "ready");
           if (readyDevice) {
             setSelectedDevice(readyDevice);
+            // Fetch default root
+            try {
+              const root = await getDefaultMediaRoot(readyDevice.serial);
+              setCurrentPath(root);
+            } catch (e) {
+              console.warn("Failed to get default root", e);
+            }
           }
         }
       } catch (err) {
@@ -111,11 +129,18 @@ export function MediaPreviewerPage() {
     if (!selectedDevice) return;
 
     const loadFolders = async () => {
+      // Check cache first
+      if (folderCache.current[currentPath]) {
+        setFolders(folderCache.current[currentPath]);
+        return;
+      }
+
       setFoldersLoading(true);
       setError(null);
 
       try {
         const folderList = await listDeviceFolders(selectedDevice.serial, currentPath);
+        folderCache.current[currentPath] = folderList;
         setFolders(folderList);
       } catch (err) {
         setError(parseError(err));
@@ -133,12 +158,24 @@ export function MediaPreviewerPage() {
     if (!selectedDevice) return;
 
     const loadMedia = async () => {
+      // Check cache first
+      if (mediaCache.current[currentPath]?.[filter]) {
+        setMediaItems(mediaCache.current[currentPath][filter]);
+        return;
+      }
+
       setMediaLoading(true);
       setError(null);
       setSelectedItems(new Set());
 
       try {
         const items = await listDeviceMedia(selectedDevice.serial, currentPath, filter);
+        
+        if (!mediaCache.current[currentPath]) {
+          mediaCache.current[currentPath] = {};
+        }
+        mediaCache.current[currentPath][filter] = items;
+        
         setMediaItems(items);
       } catch (err) {
         setError(parseError(err));

@@ -41,41 +41,38 @@ export function MediaGrid({
     loadingRef.current = new Set();
   }, [serial]);
 
-  // Lazy load thumbnails
+  // Lazy load thumbnails sequentially (Simple loading)
   useEffect(() => {
     let cancelled = false;
 
     const loadThumbnails = async () => {
-      // Prioritize visible items? For now just iterate.
-      // We process in small batches to not block UI
-      for (const item of items) {
+      // Filter items that need thumbnails
+      const itemsNeedingThumbnails = items.filter(
+        (item) =>
+          (item.media_type === "image" || item.media_type === "video") &&
+          !item.thumbnail_url &&
+          !thumbnails[item.path] &&
+          !loadingRef.current.has(item.path)
+      );
+
+      if (itemsNeedingThumbnails.length === 0) return;
+
+      // Mark all as loading initially to prevent redundant calls
+      // and load them one by one sequentially
+      for (const item of itemsNeedingThumbnails) {
         if (cancelled) break;
-        if (item.media_type !== "image" && item.media_type !== "video") continue; // Keep simple
         
-        // Skip if already has url or locally cached or currently loading
-        if (item.thumbnail_url || thumbnails[item.path] || loadingRef.current.has(item.path)) {
-          continue;
-        }
-
         loadingRef.current.add(item.path);
-
         try {
-          // For videos, we might skip thumbnail generation for now if it's too slow on backend
-          // But let's try calling it.
           const url = await getMediaThumbnail(serial, item.path);
           if (!cancelled) {
             setThumbnails((prev) => ({ ...prev, [item.path]: url }));
           }
         } catch (e) {
-          // Failed to load, mark as failed so we don't retry immediately?
-          // For now just ignore
           console.warn("Failed to load thumbnail", item.path, e);
         } finally {
           loadingRef.current.delete(item.path);
         }
-
-        // Small delay to yield to UI thread
-        await new Promise(resolve => setTimeout(resolve, 10));
       }
     };
 
@@ -86,11 +83,8 @@ export function MediaGrid({
     return () => {
       cancelled = true;
     };
-  }, [items, loading, serial, thumbnails]); // excessive deps? thumbnails in deps might cause loop?
-  // Actually, if we update thumbnails, the effect re-runs. 
-  // But the check `thumbnails[item.path]` will prevent re-fetching.
-  // Ideally use a ref for the queue to avoid re-running the loop constanty.
-  
+  }, [items, loading, serial]); // Removed 'thumbnails' to prevent loop
+
   // Format file size
   const formatSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";
@@ -128,15 +122,35 @@ export function MediaGrid({
                 "All"
               ) : f === "images" ? (
                 <>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </svg>
                   Images
                 </>
               ) : (
                 <>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
+                    />
                   </svg>
                   Videos
                 </>
@@ -147,7 +161,8 @@ export function MediaGrid({
 
         <div className="flex items-center gap-2 text-xs">
           <span className="text-surface-400">
-            {items.length} items {selectedItems.size > 0 && `(${selectedItems.size} selected)`}
+            {items.length} items{" "}
+            {selectedItems.size > 0 && `(${selectedItems.size} selected)`}
           </span>
           <button
             onClick={onSelectAll}
@@ -195,19 +210,49 @@ export function MediaGrid({
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-surface-400">
             <div className="text-surface-600 mb-3 grayscale opacity-50">
-                {filter === "images" ? (
-                    <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                ) : filter === "videos" ? (
-                    <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                    </svg>
-                ) : (
-                    <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                )}
+              {filter === "images" ? (
+                <svg
+                  className="w-16 h-16"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              ) : filter === "videos" ? (
+                <svg
+                  className="w-16 h-16"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-16 h-16"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              )}
             </div>
             <span className="text-sm">No media files found</span>
             <span className="text-xs text-surface-500 mt-1">
@@ -215,11 +260,16 @@ export function MediaGrid({
             </span>
           </div>
         ) : (
-          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+          <div 
+            className="grid gap-3" 
+            style={{ 
+              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" 
+            }}
+          >
             {items.map((item) => {
               const isSelected = selectedItems.has(item.path);
               const thumb = item.thumbnail_url || thumbnails[item.path];
-              
+
               return (
                 <div
                   key={item.path}
@@ -242,20 +292,44 @@ export function MediaGrid({
                         loading="lazy"
                         onError={(e) => {
                           // Fallback on error
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.parentElement?.classList.remove('bg-surface-800');
-                          e.currentTarget.parentElement?.classList.add('bg-surface-800');
+                          e.currentTarget.style.display = "none";
+                          e.currentTarget.parentElement?.classList.remove(
+                            "bg-surface-800",
+                          );
+                          e.currentTarget.parentElement?.classList.add(
+                            "bg-surface-800",
+                          );
                         }}
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center text-surface-600">
                         {item.media_type === "image" ? (
-                          <svg className="w-8 h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          <svg
+                            className="w-8 h-8 opacity-50"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
                           </svg>
                         ) : (
-                          <svg className="w-8 h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                          <svg
+                            className="w-8 h-8 opacity-50"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
+                            />
                           </svg>
                         )}
                       </div>
@@ -300,8 +374,12 @@ export function MediaGrid({
 
                   {/* Hover overlay with info */}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-2 pt-8">
-                    <div className="text-xs text-white truncate">{item.name}</div>
-                    <div className="text-xs text-white/70">{formatSize(item.size_bytes)}</div>
+                    <div className="text-xs text-white truncate">
+                      {item.name}
+                    </div>
+                    <div className="text-xs text-white/70">
+                      {formatSize(item.size_bytes)}
+                    </div>
                   </div>
                 </div>
               );
