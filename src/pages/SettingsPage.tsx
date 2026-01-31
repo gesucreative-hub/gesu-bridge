@@ -437,7 +437,7 @@ export function SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-surface-300 text-sm">Current version</p>
-              <p className="text-surface-100 font-medium">v1.1.0</p>
+              <p className="text-surface-100 font-medium">v0.7.0</p>
             </div>
             <button
               onClick={checkForUpdates}
