@@ -318,6 +318,15 @@ export interface MediaTransferResult {
 // ============================================
 
 /**
+ * Get the best default root folder for media browsing
+ * Detects SD card if available, otherwise uses internal storage
+ * @param serial Device serial number
+ */
+export async function getDefaultMediaRoot(serial: string): Promise<string> {
+  return invoke<string>("get_default_media_root", { serial });
+}
+
+/**
  * List folders on the device at specified path
  * @param serial Device serial number
  * @param path Path to list (defaults to /sdcard if not specified)

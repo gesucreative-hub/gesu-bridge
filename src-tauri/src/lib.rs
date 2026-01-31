@@ -7,8 +7,8 @@ mod services;
 use commands::adb::list_devices;
 use commands::bluetooth::{open_bluetooth_receive, open_bluetooth_send, open_bluetooth_settings};
 use commands::media::{
-    get_media_thumbnail, list_device_folders, list_device_media, open_media_folder, preview_media,
-    pull_media_files,
+    get_default_media_root, get_media_thumbnail, list_device_folders, list_device_media,
+    open_media_folder, preview_media, pull_media_files,
 };
 use commands::mirror::{
     get_camera_sessions, get_mirror_sessions, start_camera, start_mirror, stop_camera, stop_mirror,
@@ -62,6 +62,7 @@ pub fn run() {
             open_bluetooth_send,
             open_bluetooth_receive,
             // Media Previewer commands
+            get_default_media_root,
             list_device_folders,
             list_device_media,
             get_media_thumbnail,
